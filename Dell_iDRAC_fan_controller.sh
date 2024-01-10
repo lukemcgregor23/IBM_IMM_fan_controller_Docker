@@ -8,15 +8,14 @@
 # This function applies Dell's default dynamic fan control profile
 function apply_Dell_fan_control_profile () {
   # Use ipmitool to send the raw command to set fan control to Dell default
-  ipmitool -I $IDRAC_LOGIN_STRING raw 0x30 0x30 0x01 0x01 > /dev/null
+  ipmitool -I $IDRAC_LOGIN_STRING raw 0x3a 0x07 0x01 0x00 0x00 > /dev/null
   CURRENT_FAN_CONTROL_PROFILE="Dell default dynamic fan control profile"
 }
 
 # This function applies a user-specified static fan control profile
 function apply_user_fan_control_profile () {
   # Use ipmitool to send the raw command to set fan control to user-specified value
-  ipmitool -I $IDRAC_LOGIN_STRING raw 0x30 0x30 0x01 0x00 > /dev/null
-  ipmitool -I $IDRAC_LOGIN_STRING raw 0x30 0x30 0x02 0xff $HEXADECIMAL_FAN_SPEED > /dev/null
+  ipmitool -I $IDRAC_LOGIN_STRING raw 0x3a 0x07 0xff 0x00 $HEXADECIMAL_FAN_SPEED> /dev/null
   CURRENT_FAN_CONTROL_PROFILE="User static fan control profile ($DECIMAL_FAN_SPEED%)"
 }
 
