@@ -1,21 +1,21 @@
 #!/bin/bash
 
 # Enable strict bash mode to stop the script if an uninitialized variable is used, if a command fails, or if a command with a pipe fails
-# Not working in some setups : https://github.com/tigerblue77/Dell_iDRAC_fan_controller/issues/48
+# Not working in some setups : https://github.com/tigerblue77/Dell_IMM_fan_controller/issues/48
 # set -euo pipefail
 
 # Define global functions
 # This function applies Dell's default dynamic fan control profile
 function apply_Dell_fan_control_profile () {
   # Use ipmitool to send the raw command to set fan control to Dell default
-  ipmitool -I $IDRAC_LOGIN_STRING raw 0x3a 0x07 0x01 0x00 0x00 > /dev/null
+  ipmitool -I $IMM_LOGIN_STRING raw 0x3a 0x07 0x01 0x00 0x00 > /dev/null
   CURRENT_FAN_CONTROL_PROFILE="Dell default dynamic fan control profile"
 }
 
 # This function applies a user-specified static fan control profile
 function apply_user_fan_control_profile () {
   # Use ipmitool to send the raw command to set fan control to user-specified value
-  ipmitool -I $IDRAC_LOGIN_STRING raw 0x3a 0x07 0xff 0x00 $HEXADECIMAL_FAN_SPEED> /dev/null
+  ipmitool -I $IMM_LOGIN_STRING raw 0x3a 0x07 0xff 0x00 $HEXADECIMAL_FAN_SPEED> /dev/null
   CURRENT_FAN_CONTROL_PROFILE="User static fan control profile ($DECIMAL_FAN_SPEED%)"
 }
 
@@ -30,7 +30,7 @@ function retrieve_temperatures () {
   local IS_EXHAUST_TEMPERATURE_SENSOR_PRESENT=$1
   local IS_CPU2_TEMPERATURE_SENSOR_PRESENT=$2
 
-  local DATA=$(ipmitool -I $IDRAC_LOGIN_STRING sdr type temperature | grep degrees)
+  local DATA=$(ipmitool -I $IMM_LOGIN_STRING sdr type temperature | grep degrees)
 
   # Parse CPU data
   local CPU_DATA=$(echo "$DATA" | grep "3\." | grep -Po '\d{2}')
@@ -56,12 +56,12 @@ function retrieve_temperatures () {
 
 function enable_third_party_PCIe_card_Dell_default_cooling_response () {
   # We could check the current cooling response before applying but it's not very useful so let's skip the test and apply directly
-  ipmitool -I $IDRAC_LOGIN_STRING raw 0x30 0xce 0x00 0x16 0x05 0x00 0x00 0x00 0x05 0x00 0x00 0x00 0x00 > /dev/null
+  ipmitool -I $IMM_LOGIN_STRING raw 0x30 0xce 0x00 0x16 0x05 0x00 0x00 0x00 0x05 0x00 0x00 0x00 0x00 > /dev/null
 }
 
 function disable_third_party_PCIe_card_Dell_default_cooling_response () {
   # We could check the current cooling response before applying but it's not very useful so let's skip the test and apply directly
-  ipmitool -I $IDRAC_LOGIN_STRING raw 0x30 0xce 0x00 0x16 0x05 0x00 0x00 0x00 0x05 0x00 0x01 0x00 0x00 > /dev/null
+  ipmitool -I $IMM_LOGIN_STRING raw 0x30 0xce 0x00 0x16 0x05 0x00 0x00 0x00 0x05 0x00 0x01 0x00 0x00 > /dev/null
 }
 
 # Returns :
@@ -69,7 +69,7 @@ function disable_third_party_PCIe_card_Dell_default_cooling_response () {
 # - 1 if third-party PCIe card Dell default cooling response is currently ENABLED
 # - 2 if the current status returned by ipmitool command output is unexpected
 # function is_third_party_PCIe_card_Dell_default_cooling_response_disabled() {
-#   THIRD_PARTY_PCIE_CARD_COOLING_RESPONSE=$(ipmitool -I $IDRAC_LOGIN_STRING raw 0x30 0xce 0x01 0x16 0x05 0x00 0x00 0x00)
+#   THIRD_PARTY_PCIE_CARD_COOLING_RESPONSE=$(ipmitool -I $IMM_LOGIN_STRING raw 0x30 0xce 0x01 0x16 0x05 0x00 0x00 0x00)
 
 #   if [ "$THIRD_PARTY_PCIE_CARD_COOLING_RESPONSE" == "16 05 00 00 00 05 00 01 00 00" ]; then
 #     return 0
@@ -107,21 +107,21 @@ else
 fi
 
 # Log main informations given to the container
-echo "iDRAC/IPMI host: $IDRAC_HOST"
+echo "IMM/IPMI host: $IMM_HOST"
 
-# Check if the iDRAC host is set to 'local' or not then set the IDRAC_LOGIN_STRING accordingly
-if [[ $IDRAC_HOST == "local" ]]
+# Check if the IMM host is set to 'local' or not then set the IMM_LOGIN_STRING accordingly
+if [[ $IMM_HOST == "local" ]]
 then
-  # Check that the Docker host IPMI device (the iDRAC) has been exposed to the Docker container
+  # Check that the Docker host IPMI device (the IMM) has been exposed to the Docker container
   if [ ! -e "/dev/ipmi0" ] && [ ! -e "/dev/ipmi/0" ] && [ ! -e "/dev/ipmidev/0" ]; then
     echo "/!\ Could not open device at /dev/ipmi0 or /dev/ipmi/0 or /dev/ipmidev/0, check that you added the device to your Docker container or stop using local mode. Exiting." >&2
     exit 1
   fi
-  IDRAC_LOGIN_STRING='open'
+  IMM_LOGIN_STRING='open'
 else
-  echo "iDRAC/IPMI username: $IDRAC_USERNAME"
-  echo "iDRAC/IPMI password: $IDRAC_PASSWORD"
-  IDRAC_LOGIN_STRING="lanplus -H $IDRAC_HOST -U $IDRAC_USERNAME -P $IDRAC_PASSWORD"
+  echo "IMM/IPMI username: $IMM_USERNAME"
+  echo "IMM/IPMI password: $IMM_PASSWORD"
+  IMM_LOGIN_STRING="lanplus -H $IMM_HOST -U $IMM_USERNAME -P $IMM_PASSWORD"
 fi
 
 # Log the fan speed objective, CPU temperature threshold and check interval
