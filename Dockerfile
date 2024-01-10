@@ -6,15 +6,15 @@ RUN apt-get update
 
 RUN apt-get install ipmitool -y
 
-ADD Dell_iDRAC_fan_controller.sh /Dell_iDRAC_fan_controller.sh
+ADD IBM_IMM_fan_controller.sh /IBM_IMM_fan_controller.sh
 
 RUN chmod 0777 /IBM_IMM_fan_controller.sh
 
 # you should override these default values when running. See README.md
-#ENV IDRAC_HOST 192.168.1.100
-ENV IDRAC_HOST local
-#ENV IDRAC_USERNAME root
-#ENV IDRAC_PASSWORD calvin
+#ENV IMM_HOST 192.168.1.100
+ENV IMM_HOST local
+#ENV IMM_USERNAME root
+#ENV IMM_PASSWORD root
 ENV FAN_SPEED 5
 ENV CPU_TEMPERATURE_THRESHOLD 50
 ENV CHECK_INTERVAL 60
